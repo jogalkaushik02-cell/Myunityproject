@@ -10,11 +10,11 @@ jobs:
     name: Request .alf file
     runs-on: ubuntu-latest
     outputs:
-      alf: ${{ steps.request-alf.outputs.alf }}
+      alf: ${{ steps.request-alf.outputs.filePath }}
     steps:
-      - name: Request floating license
+      - name: Request manual activation file
         id: request-alf
-        uses: game-ci/request-activation-file@v2
+        uses: game-ci/unity-request-activation-file@v2
 
   activate-license:
     name: Activate license
