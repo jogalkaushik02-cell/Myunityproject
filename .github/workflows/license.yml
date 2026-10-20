@@ -2,25 +2,22 @@ name: Acquire Unity License
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 0 1 * *'  # Run monthly (licenses expire)
 
 jobs:
-  request-alf:
-    name: Request .alf file
+  acquire-ulf:
+    name: Acquire .ulf file
     runs-on: ubuntu-latest
-    outputs:
-      alf: ${{ steps.request-alf.outputs.filePath }}
     steps:
       - name: Request manual activation file
-        id: request-alf
+        id: getManualLicenseFile
         uses: game-ci/unity-request-activation-file@v2
 
-  activate-license:
-    name: Activate license
-    needs: request-alf
-    runs-on: ubuntu-latest
-    steps:
+      - name: Upload ALF as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: activation-file
+          path: ${{ steps.getManualLicenseFile.outputs.filePath }}
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -34,7 +31,7 @@ jobs:
           unity-license-activate \
             "${{ secrets.UNITY_EMAIL }}" \
             "${{ secrets.UNITY_PASSWORD }}" \
-            "${{ needs.request-alf.outputs.alf }}"
+            "${{ steps.getManualLicenseFile.outputs.filePath }}"
 
       - name: Read ULF file
         id: ulfRead
@@ -48,6 +45,12 @@ jobs:
           name: 'UNITY_LICENSE'
           value: ${{ steps.ulfRead.outputs.content }}
           token: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Upload ULF as artifact (backup)
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-file
+          path: ${{ env.ULF_FILE }}
 
       - name: Upload error screenshot (if failed)
         if: failure()
